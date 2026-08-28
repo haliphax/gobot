@@ -43,7 +43,18 @@ func init() {
 	}
 
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
+		cmd := i.ApplicationCommandData().Name
+
+		if h, ok := commandHandlers[cmd]; ok {
+			var user *discordgo.User
+
+			if i.Member != nil {
+				user = i.Member.User
+			} else {
+				user = i.User
+			}
+
+			log.Printf("%v used %v\n", user, cmd)
 			h(s, i)
 		}
 	})

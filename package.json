@@ -1,0 +1,30 @@
+{
+    "name": "gobot",
+    "version": "0.0.0",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/haliphax/gobot.git"
+    },
+    "license": "MIT",
+    "author": "haliphax <https://github.com/haliphax>",
+    "type": "module",
+    "devDependencies": {
+        "@commitlint/config-conventional": "^21.2.2",
+        "commitlint": "^21.2.2",
+        "gitmoji-cli": "^9.7.0",
+        "husky": "^9.1.7",
+        "nano-staged": "^1.0.2",
+        "prettier": "^3.9.6"
+    },
+    "scripts": {
+        "prepare": "husky || true"
+    },
+    "nano-staged": {
+        "*": [
+            "prettier -luw"
+        ],
+        "*.go": [
+            "go fmt"
+        ]
+    }
+}

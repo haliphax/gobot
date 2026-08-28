@@ -9,6 +9,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 
 	"github.com/haliphax/gobot/commands"
+	"github.com/haliphax/gobot/types"
 )
 
 var (
@@ -29,16 +30,18 @@ func init() {
 }
 
 var (
-	slashCommands = []*discordgo.ApplicationCommand{
-		commands.TestCommand.Meta,
+	slashCommands = []types.Command{
+		commands.Test,
 	}
 
-	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
-		"test-command": commands.TestCommand.Handler,
-	}
+	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){}
 )
 
 func init() {
+	for _, c := range slashCommands {
+		commandHandlers[c.Meta.Name] = c.Handler
+	}
+
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
 			h(s, i)
@@ -60,10 +63,10 @@ func main() {
 	registeredCommands := make([]*discordgo.ApplicationCommand, len(slashCommands))
 
 	for i, v := range slashCommands {
-		log.Printf("Adding %v", v.Name)
-		cmd, err := s.ApplicationCommandCreate(s.State.User.ID, *GuildID, v)
+		log.Printf("Adding %v", v.Meta.Name)
+		cmd, err := s.ApplicationCommandCreate(s.State.User.ID, *GuildID, v.Meta)
 		if err != nil {
-			log.Panicf("Cannot create '%v' command: %v", v.Name, err)
+			log.Panicf("Cannot create '%v' command: %v", v.Meta.Name, err)
 		}
 
 		registeredCommands[i] = cmd

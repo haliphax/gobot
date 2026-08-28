@@ -9,7 +9,7 @@ import (
 	"github.com/haliphax/gobot/types"
 )
 
-var TestCommand = types.Command{
+var Test = types.Command{
 	Meta: &discordgo.ApplicationCommand{
 		Name:        "test-command",
 		Description: "Test command",

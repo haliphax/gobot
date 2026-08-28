@@ -1,4 +1,3 @@
-// Gobot! Go go go!
 package main
 
 import (
@@ -8,6 +7,8 @@ import (
 	"os/signal"
 
 	"github.com/bwmarrin/discordgo"
+
+	"github.com/haliphax/gobot/commands"
 )
 
 var (
@@ -28,22 +29,12 @@ func init() {
 }
 
 var (
-	commands = []*discordgo.ApplicationCommand{
-		{
-			Name:        "test-command",
-			Description: "Test command",
-		},
+	slashCommands = []*discordgo.ApplicationCommand{
+		commands.TestCommand.Meta,
 	}
 
 	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
-		"test-command": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: "Testing!",
-				},
-			})
-		},
+		"test-command": commands.TestCommand.Handler,
 	}
 )
 
@@ -66,9 +57,10 @@ func main() {
 	}
 
 	log.Println("Adding commands...")
-	registeredCommands := make([]*discordgo.ApplicationCommand, len(commands))
+	registeredCommands := make([]*discordgo.ApplicationCommand, len(slashCommands))
 
-	for i, v := range commands {
+	for i, v := range slashCommands {
+		log.Printf("Adding %v", v.Name)
 		cmd, err := s.ApplicationCommandCreate(s.State.User.ID, *GuildID, v)
 		if err != nil {
 			log.Panicf("Cannot create '%v' command: %v", v.Name, err)

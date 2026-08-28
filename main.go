@@ -1,8 +1,8 @@
 // Gobot! Go go go!
 package main
 
-import "github.com/haliphax/gobot/entry"
+import "github.com/haliphax/gobot/internal/app"
 
 func main() {
-	entry.Main()
+	app.Main()
 }

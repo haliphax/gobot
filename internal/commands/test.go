@@ -4,7 +4,7 @@ package commands
 import (
 	"github.com/bwmarrin/discordgo"
 
-	"github.com/haliphax/gobot/types"
+	"github.com/haliphax/gobot/internal/types"
 )
 
 var Test = types.Command{

@@ -1,5 +1,5 @@
-// Package entry
-package entry
+// Package app
+package app
 
 import (
 	"flag"
@@ -9,8 +9,8 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 
-	"github.com/haliphax/gobot/commands"
-	"github.com/haliphax/gobot/types"
+	"github.com/haliphax/gobot/internal/commands"
+	"github.com/haliphax/gobot/internal/types"
 )
 
 var (

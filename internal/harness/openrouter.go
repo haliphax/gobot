@@ -8,6 +8,7 @@ import (
 
 	openrouter "github.com/OpenRouterTeam/go-sdk"
 	"github.com/OpenRouterTeam/go-sdk/models/components"
+	"github.com/OpenRouterTeam/go-sdk/models/operations"
 )
 
 var (
@@ -15,16 +16,26 @@ var (
 	Model            = flag.String("model", "xiaomi/mimo-v2.5", "Model identifier")
 )
 
+// ChatSender abstracts the OpenRouter chat Send method for testing
+type ChatSender interface {
+	Send(ctx context.Context,
+		chatRequest components.ChatRequest,
+		xOpenRouterMetadata *components.MetadataLevel,
+		opts ...operations.Option,
+	) (*operations.SendChatCompletionRequestResponse, error)
+}
+
 type OpenRouterClient struct {
-	Session *openrouter.OpenRouter
-	Model   string
+	Chat  ChatSender
+	Model *string
 }
 
 func (o *OpenRouterClient) Init() *OpenRouterClient {
 	s := openrouter.New(
 		openrouter.WithSecurity(*OpenRouterAPIKey),
 	)
-	o.Session = s
+	o.Chat = s.Chat
+	o.Model = Model
 	return o
 }
 
@@ -32,8 +43,8 @@ func (o *OpenRouterClient) Init() *OpenRouterClient {
 func (o *OpenRouterClient) ProcessUserMessage(message string) (string, error) {
 	ctx := context.Background()
 
-	res, err := o.Session.Chat.Send(ctx, components.ChatRequest{
-		Model: Model,
+	res, err := o.Chat.Send(ctx, components.ChatRequest{
+		Model: o.Model,
 		Messages: []components.ChatMessages{
 			components.CreateChatMessagesUser(
 				components.ChatUserMessage{

@@ -1,5 +1,4 @@
-// Package harness - OpenRouter tests
-package harness
+package openrouter
 
 import (
 	"context"

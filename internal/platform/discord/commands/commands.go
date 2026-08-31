@@ -1,5 +1,5 @@
-// Package types
-package types
+// Package commands provides slash commands for the Discord interface
+package commands
 
 import "github.com/bwmarrin/discordgo"
 

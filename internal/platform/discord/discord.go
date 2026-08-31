@@ -1,5 +1,5 @@
-// Package platform - Discord bot
-package platform
+// Package discord provides the Discord message platform
+package discord
 
 import (
 	"flag"
@@ -9,21 +9,24 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 
-	"github.com/haliphax/gobot/internal/commands"
 	"github.com/haliphax/gobot/internal/harness"
-	"github.com/haliphax/gobot/internal/types"
+	"github.com/haliphax/gobot/internal/platform/discord/commands"
 )
 
 const TypingIndicatorInterval = 10000
 
+type Discord struct {
+	Session *discordgo.Session
+}
+
 var (
 	GuildID         = flag.String("guild", "", "Guild ID")
 	BotToken        = flag.String("token", "", "Bot access token")
+	slashCommands   = []commands.Command{commands.Test}
 	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){}
 )
 
-// continually update typing indicator
-func keepTyping(s *discordgo.Session, channelID string, stopTyping chan bool) {
+func persistTypingIndicator(s *discordgo.Session, channelID string, stopTyping chan bool) {
 	for {
 		select {
 		case <-stopTyping:
@@ -69,7 +72,7 @@ func handleChatMessage(c *harness.ModelProviderClient) func(s *discordgo.Session
 			stopTyping <- true
 			close(stopTyping)
 		}()
-		go keepTyping(s, m.ChannelID, stopTyping)
+		go persistTypingIndicator(s, m.ChannelID, stopTyping)
 
 		// process message
 		resp, err := (*c).ProcessUserMessage(m.Content)
@@ -85,22 +88,9 @@ func handleChatMessage(c *harness.ModelProviderClient) func(s *discordgo.Session
 	}
 }
 
-// Discord bot
-func Discord(c harness.ModelProviderClient, stop chan bool) {
-	var (
-		slashCommands = []types.Command{commands.Test}
-		s             *discordgo.Session
-	)
-
-	// clean up Discord connection on return
-	defer func() {
-		if err := s.Close(); err != nil {
-			log.Fatal(err.Error())
-		}
-	}()
-
-	// check parameters
+func New(c harness.ModelProviderClient) *Discord {
 	s, err := discordgo.New("Bot " + *BotToken)
+	// check parameters
 	if err != nil {
 		log.Fatalf("❌ ERROR: Invalid bot parameters: %v", err)
 	}
@@ -116,17 +106,28 @@ func Discord(c harness.ModelProviderClient, stop chan bool) {
 	s.AddHandler(handleSlashCommand)
 	s.AddHandler(handleChatMessage(&c))
 
-	err = s.Open()
+	return &Discord{s}
+}
+
+func (p *Discord) Start(stop chan bool) {
+	err := p.Session.Open()
 	if err != nil {
 		log.Fatalf("❌ ERROR: Cannot open the session: %v", err)
 	}
+
+	// clean up Discord connection on return
+	defer func() {
+		if err := p.Session.Close(); err != nil {
+			log.Fatal(err.Error())
+		}
+	}()
 
 	log.Println("Adding commands...")
 	registeredCommands := make([]*discordgo.ApplicationCommand, len(slashCommands))
 
 	for i, v := range slashCommands {
 		log.Printf("Adding %v", v.Meta.Name)
-		cmd, err := s.ApplicationCommandCreate(s.State.User.ID, *GuildID, v.Meta)
+		cmd, err := p.Session.ApplicationCommandCreate(p.Session.State.User.ID, *GuildID, v.Meta)
 		if err != nil {
 			log.Panicf("❌ ERROR: Cannot create '%v' command: %v", v.Meta.Name, err)
 		}
@@ -144,7 +145,7 @@ func Discord(c harness.ModelProviderClient, stop chan bool) {
 	log.Println("Removing commands...")
 
 	for _, v := range registeredCommands {
-		err := s.ApplicationCommandDelete(s.State.User.ID, *GuildID, v.ID)
+		err := p.Session.ApplicationCommandDelete(p.Session.State.User.ID, *GuildID, v.ID)
 		if err != nil {
 			log.Panicf("Cannot delete '%v' command: %v", v.Name, err)
 		}

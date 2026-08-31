@@ -1,4 +1,4 @@
-// Package app
+// Package app provides the application entrypoint
 package app
 
 import (
@@ -8,7 +8,9 @@ import (
 	"os/signal"
 
 	"github.com/haliphax/gobot/internal/harness"
+	"github.com/haliphax/gobot/internal/harness/openrouter"
 	"github.com/haliphax/gobot/internal/platform"
+	"github.com/haliphax/gobot/internal/platform/discord"
 )
 
 func Main() {
@@ -19,8 +21,9 @@ func Main() {
 
 	signal.Notify(stop, os.Interrupt)
 	log.Println("Ctrl+C to exit")
-	client := (&harness.OpenRouterClient{}).Init()
-	go platform.Discord(client, shutdownBot)
+	client := harness.ModelProviderClient(openrouter.New())
+	plat := platform.MessagePlatform(discord.New(client))
+	go platform.MessagePlatform(plat).Start(shutdownBot)
 
 	<-stop
 	log.Println("Gracefully shutting down.")

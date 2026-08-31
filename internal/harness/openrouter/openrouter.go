@@ -1,5 +1,5 @@
-// Package harness - OpenRouter client
-package harness
+// Package openrouter provides an OpenRouter harness
+package openrouter
 
 import (
 	"context"
@@ -9,6 +9,8 @@ import (
 	openrouter "github.com/OpenRouterTeam/go-sdk"
 	"github.com/OpenRouterTeam/go-sdk/models/components"
 	"github.com/OpenRouterTeam/go-sdk/models/operations"
+
+	"github.com/haliphax/gobot/internal/harness"
 )
 
 var (
@@ -30,13 +32,11 @@ type OpenRouterClient struct {
 	Model *string
 }
 
-func (o *OpenRouterClient) Init() *OpenRouterClient {
+func New() *OpenRouterClient {
 	s := openrouter.New(
 		openrouter.WithSecurity(*OpenRouterAPIKey),
 	)
-	o.Chat = s.Chat
-	o.Model = Model
-	return o
+	return &OpenRouterClient{s.Chat, Model}
 }
 
 // ProcessUserMessage - Generate response to user message
@@ -64,5 +64,5 @@ func (o *OpenRouterClient) ProcessUserMessage(message string) (string, error) {
 		return *val.Str, nil
 	}
 
-	return "", &EmptyResponseError{}
+	return "", &harness.EmptyResponseError{}
 }

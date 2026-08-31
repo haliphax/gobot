@@ -1,4 +1,4 @@
-// Package harness
+// Package harness provides agent harness functionality
 package harness
 
 type EmptyResponseError struct{}

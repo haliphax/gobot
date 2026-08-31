@@ -1,13 +1,8 @@
-// Package commands - Test Command
 package commands
 
-import (
-	"github.com/bwmarrin/discordgo"
+import "github.com/bwmarrin/discordgo"
 
-	"github.com/haliphax/gobot/internal/types"
-)
-
-var Test = types.Command{
+var Test = Command{
 	Meta: &discordgo.ApplicationCommand{
 		Name:        "test-command",
 		Description: "Test command",

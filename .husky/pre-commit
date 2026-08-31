@@ -1,2 +1,3 @@
 npx nano-staged
 go fmt
+go test ./...

@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/haliphax/gobot/internal"
 	"github.com/haliphax/gobot/internal/harness"
 	"github.com/haliphax/gobot/internal/harness/openrouter"
 	"github.com/haliphax/gobot/internal/platform"
@@ -14,21 +15,42 @@ import (
 )
 
 func Main() {
+	// hard-coded config (for now)
+	conf := internal.Config{
+		ModelProviderType:   "openrouter",
+		MessagePlatformType: "discord",
+	}
+
+	var (
+		modelProviderClient harness.ModelProviderClient
+		messagePlatform     platform.MessagePlatform
+	)
+
 	flag.Parse()
 
+	// single provider type (for now)
+	switch conf.ModelProviderType {
+	default:
+		modelProviderClient = harness.ModelProviderClient(openrouter.New())
+	}
+
+	// single platform type (for now)
+	switch conf.MessagePlatformType {
+	default:
+		messagePlatform = platform.MessagePlatform(discord.New(modelProviderClient))
+	}
+
 	stop := make(chan os.Signal, 1)
-	shutdownBot := make(chan bool, 1)
+	shutdownPlatform := make(chan bool, 1)
 
 	signal.Notify(stop, os.Interrupt)
 	log.Println("Ctrl+C to exit")
-	client := harness.ModelProviderClient(openrouter.New())
-	plat := platform.MessagePlatform(discord.New(client))
-	go platform.MessagePlatform(plat).Start(shutdownBot)
+	go messagePlatform.Start(shutdownPlatform)
 
 	<-stop
 	log.Println("Gracefully shutting down.")
 
-	// shutdown bot and wait for termination
-	shutdownBot <- true
-	<-shutdownBot
+	// shutdown platform and wait for termination
+	shutdownPlatform <- true
+	<-shutdownPlatform
 }

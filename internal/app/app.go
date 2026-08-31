@@ -2,103 +2,22 @@
 package app
 
 import (
-	"flag"
 	"log"
 	"os"
 	"os/signal"
 
-	"github.com/bwmarrin/discordgo"
-
-	"github.com/haliphax/gobot/internal/commands"
-	"github.com/haliphax/gobot/internal/types"
+	"github.com/haliphax/gobot/internal/bot"
+	_ "github.com/haliphax/gobot/internal/harness"
 )
 
-var (
-	GuildID  = flag.String("guild", "", "Guild ID else globally registers commands")
-	BotToken = flag.String("token", "", "Bot access token")
-)
-
-var s *discordgo.Session
-
-func init() { flag.Parse() }
-
-func init() {
-	var err error
-	s, err = discordgo.New("Bot " + *BotToken)
-	if err != nil {
-		log.Fatalf("Invalid bot parameters: %v", err)
-	}
-}
-
-var (
-	slashCommands = []types.Command{
-		commands.Test,
-	}
-
-	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){}
-)
-
-func init() {
-	for _, c := range slashCommands {
-		commandHandlers[c.Meta.Name] = c.Handler
-	}
-
-	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		cmd := i.ApplicationCommandData().Name
-
-		if h, ok := commandHandlers[cmd]; ok {
-			var user *discordgo.User
-
-			if i.Member != nil {
-				user = i.Member.User
-			} else {
-				user = i.User
-			}
-
-			log.Printf("%v used %v\n", user, cmd)
-			h(s, i)
-		}
-	})
-}
+var stop = make(chan os.Signal, 1)
 
 func Main() {
-	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
-		log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
-	})
-
-	err := s.Open()
-	if err != nil {
-		log.Fatalf("Cannot open the session: %v", err)
-	}
-
-	log.Println("Adding commands...")
-	registeredCommands := make([]*discordgo.ApplicationCommand, len(slashCommands))
-
-	for i, v := range slashCommands {
-		log.Printf("Adding %v", v.Meta.Name)
-		cmd, err := s.ApplicationCommandCreate(s.State.User.ID, *GuildID, v.Meta)
-		if err != nil {
-			log.Panicf("Cannot create '%v' command: %v", v.Meta.Name, err)
-		}
-
-		registeredCommands[i] = cmd
-	}
-
-	defer s.Close()
-
-	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
-	log.Println("Press Ctrl+C to exit")
+	shutdownBot := make(chan bool, 1)
+	log.Println("Ctrl+C to exit")
+	go bot.Main(shutdownBot)
 	<-stop
-
-	log.Println("Removing commands...")
-
-	for _, v := range registeredCommands {
-		err := s.ApplicationCommandDelete(s.State.User.ID, *GuildID, v.ID)
-		if err != nil {
-			log.Panicf("Cannot delete '%v' command: %v", v.Name, err)
-		}
-	}
-
+	shutdownBot <- true
 	log.Println("Gracefully shutting down.")
 }

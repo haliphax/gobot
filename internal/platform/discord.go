@@ -1,5 +1,5 @@
-// Package bot
-package bot
+// Package platform - Discord bot
+package platform
 
 import (
 	"flag"
@@ -13,16 +13,24 @@ import (
 	"github.com/haliphax/gobot/internal/types"
 )
 
+const TypingIndicatorInterval = 10000
+
 var (
-	GuildID  = flag.String("guild", "", "Guild ID else globally registers commands")
-	BotToken = flag.String("token", "", "Bot access token")
+	GuildID             = flag.String("guild", "", "Guild ID else globally registers commands")
+	BotToken            = flag.String("token", "", "Bot access token")
+	ModelProviderClient harness.ModelProviderClient
 )
 
-var s *discordgo.Session
+var (
+	s               *discordgo.Session
+	slashCommands   = []types.Command{commands.Test}
+	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){}
+)
 
-func init() { flag.Parse() }
-
+// check parameters
 func init() {
+	flag.Parse()
+
 	var err error
 	s, err = discordgo.New("Bot " + *BotToken)
 	if err != nil {
@@ -30,14 +38,7 @@ func init() {
 	}
 }
 
-var (
-	slashCommands = []types.Command{
-		commands.Test,
-	}
-
-	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){}
-)
-
+// continually update typing indicator
 func keepTyping(s *discordgo.Session, channelID string, stopTyping chan bool) {
 	for {
 		select {
@@ -47,11 +48,12 @@ func keepTyping(s *discordgo.Session, channelID string, stopTyping chan bool) {
 			if s.ChannelTyping(channelID) != nil {
 				log.Printf("[WARNING] Could not send typing indicator to channel %v", channelID)
 			}
-			time.Sleep(4000)
+			time.Sleep(TypingIndicatorInterval)
 		}
 	}
 }
 
+// wire up handlers
 func init() {
 	for _, c := range slashCommands {
 		commandHandlers[c.Meta.Name] = c.Handler
@@ -91,7 +93,7 @@ func init() {
 		go keepTyping(s, m.ChannelID, stopTyping)
 
 		// process message
-		resp, err := harness.HandleChat(m.Content)
+		resp, err := ModelProviderClient.ProcessUserMessage(m.Content)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -104,12 +106,15 @@ func init() {
 	})
 }
 
-func Main(stop chan bool) {
+// Discord bot
+func Discord(c harness.ModelProviderClient, stop chan bool) {
 	defer func() {
 		if err := s.Close(); err != nil {
 			log.Fatal(err.Error())
 		}
 	}()
+
+	ModelProviderClient = c
 
 	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
 		log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)

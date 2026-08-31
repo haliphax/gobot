@@ -3,6 +3,7 @@ package platform
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"time"
 
@@ -16,27 +17,10 @@ import (
 const TypingIndicatorInterval = 10000
 
 var (
-	GuildID             = flag.String("guild", "", "Guild ID else globally registers commands")
-	BotToken            = flag.String("token", "", "Bot access token")
-	ModelProviderClient harness.ModelProviderClient
-)
-
-var (
-	s               *discordgo.Session
-	slashCommands   = []types.Command{commands.Test}
+	GuildID         = flag.String("guild", "", "Guild ID")
+	BotToken        = flag.String("token", "", "Bot access token")
 	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){}
 )
-
-// check parameters
-func init() {
-	flag.Parse()
-
-	var err error
-	s, err = discordgo.New("Bot " + *BotToken)
-	if err != nil {
-		log.Fatalf("Invalid bot parameters: %v", err)
-	}
-}
 
 // continually update typing indicator
 func keepTyping(s *discordgo.Session, channelID string, stopTyping chan bool) {
@@ -46,43 +30,38 @@ func keepTyping(s *discordgo.Session, channelID string, stopTyping chan bool) {
 			return
 		default:
 			if s.ChannelTyping(channelID) != nil {
-				log.Printf("[WARNING] Could not send typing indicator to channel %v", channelID)
+				log.Printf("⚠️ WARNING: Could not send typing indicator to channel %v", channelID)
 			}
 			time.Sleep(TypingIndicatorInterval)
 		}
 	}
 }
 
-// wire up handlers
-func init() {
-	for _, c := range slashCommands {
-		commandHandlers[c.Meta.Name] = c.Handler
-	}
+func handleSlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	cmd := i.ApplicationCommandData().Name
 
-	// handle slash commands
-	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		cmd := i.ApplicationCommandData().Name
+	if h, ok := commandHandlers[cmd]; ok {
+		var user *discordgo.User
 
-		if h, ok := commandHandlers[cmd]; ok {
-			var user *discordgo.User
-
-			if i.Member != nil {
-				user = i.Member.User
-			} else {
-				user = i.User
-			}
-
-			log.Printf("%v used %v\n", user, cmd)
-			h(s, i)
+		if i.Member != nil {
+			user = i.Member.User
+		} else {
+			user = i.User
 		}
-	})
 
-	// handle chat messages
-	s.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
+		log.Printf("%v used %v\n", user, cmd)
+		h(s, i)
+	}
+}
+
+func handleChatMessage(c *harness.ModelProviderClient) func(s *discordgo.Session, m *discordgo.MessageCreate) {
+	return func(s *discordgo.Session, m *discordgo.MessageCreate) {
 		// ignore messages from the bot itself
 		if m.Author.ID == s.State.User.ID {
 			return
 		}
+
+		log.Printf("Generating response to message from %v @ %v", m.Author.Username, m.GuildID)
 
 		// typing indicator
 		stopTyping := make(chan bool, 1)
@@ -93,36 +72,53 @@ func init() {
 		go keepTyping(s, m.ChannelID, stopTyping)
 
 		// process message
-		resp, err := ModelProviderClient.ProcessUserMessage(m.Content)
+		resp, err := (*c).ProcessUserMessage(m.Content)
 		if err != nil {
-			log.Fatal(err.Error())
+			_, _ = s.ChannelMessageSendReply(m.ChannelID, fmt.Sprintf("❌ ERROR: %v", err.Error()), m.Reference())
+		} else {
+			// send reply
+			_, err = s.ChannelMessageSendReply(m.ChannelID, resp, m.Reference())
+			if err != nil {
+				log.Printf("❌ ERROR: %v", err.Error())
+			}
 		}
-
-		// send reply
-		_, err = s.ChannelMessageSendReply(m.ChannelID, resp, m.Reference())
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-	})
+	}
 }
 
 // Discord bot
 func Discord(c harness.ModelProviderClient, stop chan bool) {
+	var (
+		slashCommands = []types.Command{commands.Test}
+		s             *discordgo.Session
+	)
+
+	// clean up Discord connection on return
 	defer func() {
 		if err := s.Close(); err != nil {
 			log.Fatal(err.Error())
 		}
 	}()
 
-	ModelProviderClient = c
+	// check parameters
+	s, err := discordgo.New("Bot " + *BotToken)
+	if err != nil {
+		log.Fatalf("❌ ERROR: Invalid bot parameters: %v", err)
+	}
+
+	// track command handlers
+	for _, com := range slashCommands {
+		commandHandlers[com.Meta.Name] = com.Handler
+	}
 
 	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
 		log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
 	})
+	s.AddHandler(handleSlashCommand)
+	s.AddHandler(handleChatMessage(&c))
 
-	err := s.Open()
+	err = s.Open()
 	if err != nil {
-		log.Fatalf("Cannot open the session: %v", err)
+		log.Fatalf("❌ ERROR: Cannot open the session: %v", err)
 	}
 
 	log.Println("Adding commands...")
@@ -132,7 +128,7 @@ func Discord(c harness.ModelProviderClient, stop chan bool) {
 		log.Printf("Adding %v", v.Meta.Name)
 		cmd, err := s.ApplicationCommandCreate(s.State.User.ID, *GuildID, v.Meta)
 		if err != nil {
-			log.Panicf("Cannot create '%v' command: %v", v.Meta.Name, err)
+			log.Panicf("❌ ERROR: Cannot create '%v' command: %v", v.Meta.Name, err)
 		}
 
 		registeredCommands[i] = cmd
@@ -140,6 +136,9 @@ func Discord(c harness.ModelProviderClient, stop chan bool) {
 
 	// wait for interrupt
 	<-stop
+
+	// notify parent on termination
+	defer func() { stop <- true }()
 
 	// cleanup
 	log.Println("Removing commands...")

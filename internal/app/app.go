@@ -2,6 +2,7 @@
 package app
 
 import (
+	"flag"
 	"log"
 	"os"
 	"os/signal"
@@ -10,17 +11,21 @@ import (
 	"github.com/haliphax/gobot/internal/platform"
 )
 
-var (
-	stop   = make(chan os.Signal, 1)
-	client = &harness.OpenRouterClient{}
-)
-
 func Main() {
-	signal.Notify(stop, os.Interrupt)
+	flag.Parse()
+
+	stop := make(chan os.Signal, 1)
 	shutdownBot := make(chan bool, 1)
+
+	signal.Notify(stop, os.Interrupt)
 	log.Println("Ctrl+C to exit")
+	client := (&harness.OpenRouterClient{}).Init()
 	go platform.Discord(client, shutdownBot)
+
 	<-stop
-	shutdownBot <- true
 	log.Println("Gracefully shutting down.")
+
+	// shutdown bot and wait for termination
+	shutdownBot <- true
+	<-shutdownBot
 }

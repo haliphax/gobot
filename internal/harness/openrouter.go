@@ -12,21 +12,28 @@ import (
 
 var (
 	OpenRouterAPIKey = flag.String("apiKey", "", "OpenRouter API key")
-	Model            = "xiaomi/mimo-v2.5"
+	Model            = flag.String("model", "xiaomi/mimo-v2.5", "Model identifier")
 )
 
-type OpenRouterClient struct{}
+type OpenRouterClient struct {
+	Session *openrouter.OpenRouter
+	Model   string
+}
+
+func (o *OpenRouterClient) Init() *OpenRouterClient {
+	s := openrouter.New(
+		openrouter.WithSecurity(*OpenRouterAPIKey),
+	)
+	o.Session = s
+	return o
+}
 
 // ProcessUserMessage - Generate response to user message
 func (o *OpenRouterClient) ProcessUserMessage(message string) (string, error) {
 	ctx := context.Background()
 
-	s := openrouter.New(
-		openrouter.WithSecurity(*OpenRouterAPIKey),
-	)
-
-	res, err := s.Chat.Send(ctx, components.ChatRequest{
-		Model: &Model,
+	res, err := o.Session.Chat.Send(ctx, components.ChatRequest{
+		Model: Model,
 		Messages: []components.ChatMessages{
 			components.CreateChatMessagesUser(
 				components.ChatUserMessage{
@@ -37,7 +44,8 @@ func (o *OpenRouterClient) ProcessUserMessage(message string) (string, error) {
 		},
 	}, nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("❌ ERROR: %v", err.Error())
+		return "", err
 	}
 
 	if res != nil {

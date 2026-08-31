@@ -88,6 +88,7 @@ func handleChatMessage(c *harness.ModelProviderClient) func(s *discordgo.Session
 	}
 }
 
+// New provides an initialized Discord client instance by reference
 func New(c harness.ModelProviderClient) *Discord {
 	s, err := discordgo.New("Bot " + *BotToken)
 	// check parameters
@@ -109,6 +110,7 @@ func New(c harness.ModelProviderClient) *Discord {
 	return &Discord{s}
 }
 
+// Start maintains a persistent Discord connection and (de)registers commands
 func (p *Discord) Start(stop chan bool) {
 	err := p.Session.Open()
 	if err != nil {

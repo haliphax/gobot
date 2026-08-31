@@ -32,6 +32,7 @@ type OpenRouterClient struct {
 	Model *string
 }
 
+// New provides a new OpenRouterClient instance by reference
 func New() *OpenRouterClient {
 	s := openrouter.New(
 		openrouter.WithSecurity(*OpenRouterAPIKey),
@@ -39,7 +40,7 @@ func New() *OpenRouterClient {
 	return &OpenRouterClient{s.Chat, Model}
 }
 
-// ProcessUserMessage - Generate response to user message
+// ProcessUserMessage sends the message to OpenRouter for generation
 func (o *OpenRouterClient) ProcessUserMessage(message string) (string, error) {
 	ctx := context.Background()
 

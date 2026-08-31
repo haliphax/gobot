@@ -40,13 +40,16 @@ func Main() {
 		messagePlatform = platform.MessagePlatform(discord.New(modelProviderClient))
 	}
 
+	// coordination channels
 	stop := make(chan os.Signal, 1)
 	shutdownPlatform := make(chan bool, 1)
 
+	// start message platform
 	signal.Notify(stop, os.Interrupt)
 	log.Println("Ctrl+C to exit")
 	go messagePlatform.Start(shutdownPlatform)
 
+	// wait for interrupt
 	<-stop
 	log.Println("Gracefully shutting down.")
 

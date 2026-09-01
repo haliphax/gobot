@@ -22,6 +22,10 @@
     "nano-staged": {
         "*": [
             "prettier -luw"
+        ],
+        "*.go": [
+            "go fmt #",
+            "go fix #"
         ]
     }
 }

@@ -1,0 +1,61 @@
+name: Checks
+
+on:
+    pull_request:
+        branches: [main]
+
+    push:
+        branches: [main]
+
+    workflow_dispatch:
+
+concurrency:
+    cancel-in-progress: true
+    group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+
+jobs:
+    gofmt:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check out
+              uses: actions/checkout@v7
+
+            - name: Set up Go
+              uses: actions/setup-go@v7
+              with:
+                  go-version-file: go.mod
+
+            - name: gofmt
+              run: gofmt -l
+
+    prettier:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check out
+              uses: actions/checkout@v7
+
+            - name: Set up Node
+              uses: actions/setup-node@v7
+              with:
+                  node-version-file: .nvmrc
+                  cache: npm
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: prettier
+              run: npx prettier -lu .
+
+    gofix:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check out
+              uses: actions/checkout@v7
+
+            - name: Set up Go
+              uses: actions/setup-go@v7
+              with:
+                  go-version-file: go.mod
+
+            - name: go fix
+              run: go fix -diff

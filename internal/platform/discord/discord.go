@@ -4,12 +4,13 @@ package discord
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
-	"os"
 	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/bwmarrin/discordgo"
+	"github.com/spf13/afero"
 
 	"github.com/haliphax/gobot/internal/harness"
 	"github.com/haliphax/gobot/internal/platform"
@@ -99,14 +100,19 @@ func handleChatMessage(c *harness.ModelProviderClient) func(s *discordgo.Session
 }
 
 // New provides an initialized Discord client instance by reference
-func New(configFilename *string, c harness.ModelProviderClient) *Discord {
-	file, err := os.ReadFile(*configFilename)
+func New(fs afero.Fs, configFilename *string, c harness.ModelProviderClient) *Discord {
+	file, err := fs.Open(*configFilename)
+	if err != nil {
+		panic(err)
+	}
+
+	content, err := io.ReadAll(file)
 	if err != nil {
 		panic(err)
 	}
 
 	var baseConf Config
-	_, err = toml.Decode(string(file), &baseConf)
+	_, err = toml.Decode(string(content), &baseConf)
 	if err != nil {
 		panic(err)
 	}

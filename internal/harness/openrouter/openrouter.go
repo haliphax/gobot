@@ -3,13 +3,14 @@ package openrouter
 
 import (
 	"context"
+	"io"
 	"log"
-	"os"
 
 	"github.com/BurntSushi/toml"
 	openrouter "github.com/OpenRouterTeam/go-sdk"
 	"github.com/OpenRouterTeam/go-sdk/models/components"
 	"github.com/OpenRouterTeam/go-sdk/models/operations"
+	"github.com/spf13/afero"
 
 	"github.com/haliphax/gobot/internal/harness"
 )
@@ -38,14 +39,19 @@ type OpenRouterClient struct {
 }
 
 // New provides a new OpenRouterClient instance by reference
-func New(configFilename *string) *OpenRouterClient {
-	file, err := os.ReadFile(*configFilename)
+func New(fs afero.Fs, configFilename *string) *OpenRouterClient {
+	file, err := fs.Open(*configFilename)
+	if err != nil {
+		panic(err)
+	}
+
+	content, err := io.ReadAll(file)
 	if err != nil {
 		panic(err)
 	}
 
 	var baseConf Config
-	_, err = toml.Decode(string(file), &baseConf)
+	_, err = toml.Decode(string(content), &baseConf)
 	if err != nil {
 		panic(err)
 	}

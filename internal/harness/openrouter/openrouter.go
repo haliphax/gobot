@@ -43,8 +43,8 @@ func New() *OpenRouterClient {
 // ProcessUserMessage sends the message to OpenRouter for generation
 func (o *OpenRouterClient) ProcessUserMessage(message string) (string, error) {
 	messageLen := len(message)
-	snip := string(message[:min(20, messageLen)])
-	if messageLen > 20 {
+	snip := string(message[:min(harness.UserMessageLogSnippetLength, messageLen)])
+	if messageLen > harness.UserMessageLogSnippetLength {
 		snip += "..."
 	}
 	log.Printf("🤖 OpenRouter processing user message: %v", snip)
@@ -70,8 +70,8 @@ func (o *OpenRouterClient) ProcessUserMessage(message string) (string, error) {
 		val, _ := res.ChatResult.Choices[0].Message.Content.GetOrZero()
 		valStr := *val.Str
 		valStrLen := len(valStr)
-		snip = string(valStr[:min(20, valStrLen)])
-		if valStrLen > 20 {
+		snip = string(valStr[:min(harness.AgentMessageLogSnippetLength, valStrLen)])
+		if valStrLen > harness.AgentMessageLogSnippetLength {
 			snip += "..."
 		}
 		log.Printf("🗨️ OpenRouter response: %v", snip)

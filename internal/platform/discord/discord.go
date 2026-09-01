@@ -10,6 +10,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 
 	"github.com/haliphax/gobot/internal/harness"
+	"github.com/haliphax/gobot/internal/platform"
 	"github.com/haliphax/gobot/internal/platform/discord/commands"
 )
 
@@ -108,6 +109,19 @@ func New(c harness.ModelProviderClient) *Discord {
 	s.AddHandler(handleChatMessage(&c))
 
 	return &Discord{s}
+}
+
+var capabilities = platform.MessagePlatformCapabilities{
+	CanEditMessage:    true,
+	CanReplyToMessage: true,
+	CanSendMessage:    true,
+	CanThreadMessages: true,
+	MaxMessageLength:  4000,
+	MinMessageLength:  1,
+}
+
+func (p *Discord) Capabilities() *platform.MessagePlatformCapabilities {
+	return &capabilities
 }
 
 // Start maintains a persistent Discord connection and (de)registers commands

@@ -52,7 +52,7 @@ func handleSlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			user = i.User
 		}
 
-		log.Printf("%v used %v\n", user, cmd)
+		log.Printf("💥 %v used %v\n", user, cmd)
 		h(s, i)
 	}
 }
@@ -64,7 +64,7 @@ func handleChatMessage(c *harness.ModelProviderClient) func(s *discordgo.Session
 			return
 		}
 
-		log.Printf("Generating response to message from %v @ %v", m.Author.Username, m.GuildID)
+		log.Printf("⏳ Generating response to message from %v @ %v", m.Author.Username, m.GuildID)
 
 		// typing indicator
 		stopTyping := make(chan bool, 1)
@@ -102,7 +102,7 @@ func New(c harness.ModelProviderClient) *Discord {
 	}
 
 	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
-		log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
+		log.Printf("🛜 Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
 	})
 	s.AddHandler(handleSlashCommand)
 	s.AddHandler(handleChatMessage(&c))
@@ -124,11 +124,11 @@ func (p *Discord) Start(stop chan bool) {
 		}
 	}()
 
-	log.Println("Adding commands...")
+	log.Println("⚡ Adding commands...")
 	registeredCommands := make([]*discordgo.ApplicationCommand, len(slashCommands))
 
 	for i, v := range slashCommands {
-		log.Printf("Adding %v", v.Meta.Name)
+		log.Printf("➕ Adding %v", v.Meta.Name)
 		cmd, err := p.Session.ApplicationCommandCreate(p.Session.State.User.ID, *GuildID, v.Meta)
 		if err != nil {
 			log.Panicf("❌ ERROR: Cannot create '%v' command: %v", v.Meta.Name, err)
@@ -144,12 +144,12 @@ func (p *Discord) Start(stop chan bool) {
 	defer func() { stop <- true }()
 
 	// cleanup
-	log.Println("Removing commands...")
+	log.Println("🗑️ Removing commands...")
 
 	for _, v := range registeredCommands {
 		err := p.Session.ApplicationCommandDelete(p.Session.State.User.ID, *GuildID, v.ID)
 		if err != nil {
-			log.Panicf("Cannot delete '%v' command: %v", v.Name, err)
+			log.Printf("❌ ERROR: Cannot delete '%v' command: %v", v.Name, err)
 		}
 	}
 }

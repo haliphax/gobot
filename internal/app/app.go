@@ -46,12 +46,12 @@ func Main() {
 
 	// start message platform
 	signal.Notify(stop, os.Interrupt)
-	log.Println("Ctrl+C to exit")
+	log.Println("🚪 Ctrl+C to exit")
 	go messagePlatform.Start(shutdownPlatform)
 
 	// wait for interrupt
 	<-stop
-	log.Println("Gracefully shutting down.")
+	log.Println("🪦 Gracefully shutting down.")
 
 	// shutdown platform and wait for termination
 	shutdownPlatform <- true

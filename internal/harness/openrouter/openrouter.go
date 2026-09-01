@@ -42,8 +42,14 @@ func New() *OpenRouterClient {
 
 // ProcessUserMessage sends the message to OpenRouter for generation
 func (o *OpenRouterClient) ProcessUserMessage(message string) (string, error) {
-	ctx := context.Background()
+	messageLen := len(message)
+	snip := string(message[:min(20, messageLen)])
+	if messageLen > 20 {
+		snip += "..."
+	}
+	log.Printf("🤖 OpenRouter processing user message: %v", snip)
 
+	ctx := context.Background()
 	res, err := o.Chat.Send(ctx, components.ChatRequest{
 		Model: o.Model,
 		Messages: []components.ChatMessages{
@@ -62,7 +68,14 @@ func (o *OpenRouterClient) ProcessUserMessage(message string) (string, error) {
 
 	if res != nil {
 		val, _ := res.ChatResult.Choices[0].Message.Content.GetOrZero()
-		return *val.Str, nil
+		valStr := *val.Str
+		valStrLen := len(valStr)
+		snip = string(valStr[:min(20, valStrLen)])
+		if valStrLen > 20 {
+			snip += "..."
+		}
+		log.Printf("🗨️ OpenRouter response: %v", snip)
+		return valStr, nil
 	}
 
 	return "", &harness.EmptyResponseError{}

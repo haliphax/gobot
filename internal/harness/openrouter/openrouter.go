@@ -38,9 +38,9 @@ type OpenRouterClient struct {
 	currentModel string
 }
 
-// New provides a new OpenRouterClient instance by reference
-func New(fs afero.Fs, configFilename *string) *OpenRouterClient {
-	file, err := fs.Open(*configFilename)
+// Load loads the specified configuration file
+func LoadConfiguration(fs afero.Fs, configFilename string) *OpenRouterConfig {
+	file, err := fs.Open(configFilename)
 	if err != nil {
 		panic(err)
 	}
@@ -56,11 +56,16 @@ func New(fs afero.Fs, configFilename *string) *OpenRouterClient {
 		panic(err)
 	}
 
-	conf := baseConf.OpenRouter
+	return &baseConf.OpenRouter
+}
+
+// New provides a new OpenRouterClient instance by reference
+func New(fs afero.Fs, configFilename string) *OpenRouterClient {
+	conf := LoadConfiguration(fs, configFilename)
 	s := openrouter.New(
 		openrouter.WithSecurity(conf.Token),
 	)
-	return &OpenRouterClient{conf, s.Chat, ""}
+	return &OpenRouterClient{*conf, s.Chat, ""}
 }
 
 func (o *OpenRouterClient) Model() string {

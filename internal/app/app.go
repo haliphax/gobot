@@ -34,7 +34,7 @@ func Main() {
 	// load model provider
 	switch conf.Base.ModelProviderType {
 	case "openrouter":
-		modelProviderClient = harness.ModelProviderClient(openrouter.New(fs, ConfigFilename))
+		modelProviderClient = harness.ModelProviderClient(openrouter.New(fs, *ConfigFilename))
 	default:
 		log.Fatalf("☠️ Unsupported model provider: %v", conf.Base.ModelProviderType)
 	}
@@ -45,7 +45,7 @@ func Main() {
 	// load message platform
 	switch conf.Base.MessagePlatformType {
 	case "discord":
-		messagePlatform = platform.MessagePlatform(discord.New(fs, ConfigFilename, modelProviderClient))
+		messagePlatform = platform.MessagePlatform(discord.New(fs, *ConfigFilename, modelProviderClient))
 	default:
 		log.Fatalf("☠️ Unsupported message platform: %v", conf.Base.MessagePlatformType)
 	}

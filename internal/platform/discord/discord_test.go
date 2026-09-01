@@ -1,4 +1,4 @@
-package openrouter
+package discord
 
 import (
 	"io"
@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/afero"
 )
 
-// LoadConfiguration should load the OpenRouter configuration block
+// LoadConfiguration should load the Discord configuration block
 func TestLoadConfigurationParsesConfiguration(t *testing.T) {
 	fs := afero.NewMemMapFs()
 	file, err := fs.Create("test.toml")
@@ -16,7 +16,7 @@ func TestLoadConfigurationParsesConfiguration(t *testing.T) {
 	}
 
 	content := `
-[OpenRouter]
+[Discord]
 Token = "test-token"
 `
 	_, err = io.WriteString(file, content)

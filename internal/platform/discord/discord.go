@@ -99,9 +99,9 @@ func handleChatMessage(c *harness.ModelProviderClient) func(s *discordgo.Session
 	}
 }
 
-// New provides an initialized Discord client instance by reference
-func New(fs afero.Fs, configFilename *string, c harness.ModelProviderClient) *Discord {
-	file, err := fs.Open(*configFilename)
+// Load loads the specified configuration file
+func LoadConfiguration(fs afero.Fs, configFilename string) *DiscordConfig {
+	file, err := fs.Open(configFilename)
 	if err != nil {
 		panic(err)
 	}
@@ -117,7 +117,13 @@ func New(fs afero.Fs, configFilename *string, c harness.ModelProviderClient) *Di
 		panic(err)
 	}
 
-	conf := baseConf.Discord
+	return &baseConf.Discord
+}
+
+// New provides an initialized Discord client instance by reference
+func New(fs afero.Fs, configFilename string, c harness.ModelProviderClient) *Discord {
+	conf := LoadConfiguration(fs, configFilename)
+
 	s, err := discordgo.New("Bot " + conf.Token)
 	// check parameters
 	if err != nil {

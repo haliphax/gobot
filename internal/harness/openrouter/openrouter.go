@@ -3,9 +3,10 @@ package openrouter
 
 import (
 	"context"
-	"flag"
 	"log"
+	"os"
 
+	"github.com/BurntSushi/toml"
 	openrouter "github.com/OpenRouterTeam/go-sdk"
 	"github.com/OpenRouterTeam/go-sdk/models/components"
 	"github.com/OpenRouterTeam/go-sdk/models/operations"
@@ -13,10 +14,13 @@ import (
 	"github.com/haliphax/gobot/internal/harness"
 )
 
-var (
-	OpenRouterAPIKey = flag.String("apiKey", "", "OpenRouter API key")
-	Model            = flag.String("model", "xiaomi/mimo-v2.5", "Model identifier")
-)
+type OpenRouterConfig struct {
+	Token string
+}
+
+type Config struct {
+	OpenRouter OpenRouterConfig
+}
 
 // ChatSender abstracts the OpenRouter chat Send method for testing
 type ChatSender interface {
@@ -28,16 +32,38 @@ type ChatSender interface {
 }
 
 type OpenRouterClient struct {
-	Chat  ChatSender
-	Model *string
+	OpenRouterConfig
+	Chat         ChatSender
+	currentModel string
 }
 
 // New provides a new OpenRouterClient instance by reference
-func New() *OpenRouterClient {
+func New(configFilename *string) *OpenRouterClient {
+	file, err := os.ReadFile(*configFilename)
+	if err != nil {
+		panic(err)
+	}
+
+	var baseConf Config
+	_, err = toml.Decode(string(file), &baseConf)
+	if err != nil {
+		panic(err)
+	}
+
+	conf := baseConf.OpenRouter
 	s := openrouter.New(
-		openrouter.WithSecurity(*OpenRouterAPIKey),
+		openrouter.WithSecurity(conf.Token),
 	)
-	return &OpenRouterClient{s.Chat, Model}
+	return &OpenRouterClient{conf, s.Chat, ""}
+}
+
+func (o *OpenRouterClient) Model() string {
+	return o.currentModel
+}
+
+func (o *OpenRouterClient) SetModel(model string) string {
+	o.currentModel = model
+	return o.Model()
 }
 
 // ProcessUserMessage sends the message to OpenRouter for generation
@@ -47,11 +73,11 @@ func (o *OpenRouterClient) ProcessUserMessage(message string) (string, error) {
 	if messageLen > harness.UserMessageLogSnippetLength {
 		snip += "..."
 	}
-	log.Printf("🤖 OpenRouter processing user message: %v", snip)
+	log.Printf("🤖 OpenRouter processing user message (model: %v): %v", o.Model(), snip)
 
 	ctx := context.Background()
 	res, err := o.Chat.Send(ctx, components.ChatRequest{
-		Model: o.Model,
+		Model: new(o.Model()),
 		Messages: []components.ChatMessages{
 			components.CreateChatMessagesUser(
 				components.ChatUserMessage{
@@ -74,7 +100,7 @@ func (o *OpenRouterClient) ProcessUserMessage(message string) (string, error) {
 		if valStrLen > harness.AgentMessageLogSnippetLength {
 			snip += "..."
 		}
-		log.Printf("🗨️ OpenRouter response: %v", snip)
+		log.Printf("🗨️ OpenRouter response (model: %v): %v", o.Model(), snip)
 		return valStr, nil
 	}
 

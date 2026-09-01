@@ -1,0 +1,12 @@
+[Base]
+MessagePlatformType = "discord"
+ModelProviderType = "openrouter"
+
+[Agent]
+Model = "xiaomi/mimo-v2.5"
+
+[Discord]
+Token = "CHANGEME"
+
+[OpenRouter]
+Token = "CHANGEME"

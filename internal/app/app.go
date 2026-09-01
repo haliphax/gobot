@@ -7,19 +7,18 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/haliphax/gobot/internal"
+	"github.com/haliphax/gobot/internal/config"
 	"github.com/haliphax/gobot/internal/harness"
 	"github.com/haliphax/gobot/internal/harness/openrouter"
 	"github.com/haliphax/gobot/internal/platform"
 	"github.com/haliphax/gobot/internal/platform/discord"
 )
 
+var ConfigFilename = new("gobot.toml")
+
 func Main() {
-	// hard-coded config (for now)
-	conf := internal.Config{
-		ModelProviderType:   "openrouter",
-		MessagePlatformType: "discord",
-	}
+	// load base configuration
+	conf := config.Load(*ConfigFilename)
 
 	var (
 		modelProviderClient harness.ModelProviderClient
@@ -28,16 +27,23 @@ func Main() {
 
 	flag.Parse()
 
-	// single provider type (for now)
-	switch conf.ModelProviderType {
+	// load model provider
+	switch conf.Base.ModelProviderType {
+	case "openrouter":
+		modelProviderClient = harness.ModelProviderClient(openrouter.New(ConfigFilename))
 	default:
-		modelProviderClient = harness.ModelProviderClient(openrouter.New())
+		log.Fatalf("☠️ Unsupported model provider: %v", conf.Base.ModelProviderType)
 	}
 
-	// single platform type (for now)
-	switch conf.MessagePlatformType {
+	// set default model
+	modelProviderClient.SetModel(conf.Agent.Model)
+
+	// load message platform
+	switch conf.Base.MessagePlatformType {
+	case "discord":
+		messagePlatform = platform.MessagePlatform(discord.New(ConfigFilename, modelProviderClient))
 	default:
-		messagePlatform = platform.MessagePlatform(discord.New(modelProviderClient))
+		log.Fatalf("☠️ Unsupported message platform: %v", conf.Base.MessagePlatformType)
 	}
 
 	// coordination channels

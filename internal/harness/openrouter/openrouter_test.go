@@ -26,7 +26,6 @@ func (m *MockChatSender) Send(ctx context.Context,
 }
 
 func TestProcessUserMessageCallsSend(t *testing.T) {
-	Model = new("test-model")
 	var capturedRequest components.ChatRequest
 	sendCalled := false
 
@@ -60,8 +59,8 @@ func TestProcessUserMessageCallsSend(t *testing.T) {
 	}
 
 	client := &OpenRouterClient{
-		Chat:  mock,
-		Model: new("test-model"),
+		Chat:         mock,
+		currentModel: "test-model",
 	}
 
 	result, err := client.ProcessUserMessage("hello")

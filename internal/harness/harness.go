@@ -14,4 +14,7 @@ func (e *EmptyResponseError) Error() string {
 
 type ModelProviderClient interface {
 	ProcessUserMessage(message string) (string, error)
+	// props
+	Model() string
+	SetModel(model string) string
 }

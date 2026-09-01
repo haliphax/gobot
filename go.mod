@@ -5,6 +5,7 @@ go 1.27
 require github.com/bwmarrin/discordgo v0.29.0
 
 require (
+	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/OpenRouterTeam/go-sdk v0.7.98 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/spyzhov/ajson v0.8.0 // indirect

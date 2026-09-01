@@ -5,8 +5,10 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
+	"github.com/BurntSushi/toml"
 	"github.com/bwmarrin/discordgo"
 
 	"github.com/haliphax/gobot/internal/harness"
@@ -16,13 +18,20 @@ import (
 
 const TypingIndicatorInterval = 10000
 
+type DiscordConfig struct {
+	Token string
+}
+
+type Config struct {
+	Discord DiscordConfig
+}
+
 type Discord struct {
 	Session *discordgo.Session
 }
 
 var (
 	GuildID         = flag.String("guild", "", "Guild ID")
-	BotToken        = flag.String("token", "", "Bot access token")
 	slashCommands   = []commands.Command{commands.Test}
 	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){}
 )
@@ -90,8 +99,20 @@ func handleChatMessage(c *harness.ModelProviderClient) func(s *discordgo.Session
 }
 
 // New provides an initialized Discord client instance by reference
-func New(c harness.ModelProviderClient) *Discord {
-	s, err := discordgo.New("Bot " + *BotToken)
+func New(configFilename *string, c harness.ModelProviderClient) *Discord {
+	file, err := os.ReadFile(*configFilename)
+	if err != nil {
+		panic(err)
+	}
+
+	var baseConf Config
+	_, err = toml.Decode(string(file), &baseConf)
+	if err != nil {
+		panic(err)
+	}
+
+	conf := baseConf.Discord
+	s, err := discordgo.New("Bot " + conf.Token)
 	// check parameters
 	if err != nil {
 		log.Fatalf("❌ ERROR: Invalid bot parameters: %v", err)

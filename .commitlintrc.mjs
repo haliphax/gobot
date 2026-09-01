@@ -75,7 +75,7 @@ const gitmojis = [
     "🩺",
 ];
 
-module.exports = {
+export default {
     extends: ["@commitlint/config-conventional"],
     parserPreset: {
         parserOpts: {

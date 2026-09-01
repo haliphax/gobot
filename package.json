@@ -18,14 +18,5 @@
     },
     "scripts": {
         "prepare": "husky || true"
-    },
-    "nano-staged": {
-        "*": [
-            "prettier -luw"
-        ],
-        "*.go": [
-            "go fmt #",
-            "go fix #"
-        ]
     }
 }

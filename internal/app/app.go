@@ -7,6 +7,8 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/spf13/afero"
+
 	"github.com/haliphax/gobot/internal/config"
 	"github.com/haliphax/gobot/internal/harness"
 	"github.com/haliphax/gobot/internal/harness/openrouter"
@@ -18,7 +20,7 @@ var ConfigFilename = new("gobot.toml")
 
 func Main() {
 	// load base configuration
-	conf := config.Load(*ConfigFilename)
+	conf := config.Load(afero.NewOsFs(), *ConfigFilename)
 
 	var (
 		modelProviderClient harness.ModelProviderClient

@@ -2,10 +2,11 @@
 package config
 
 import (
+	"io"
 	"log"
-	"os"
 
 	"github.com/BurntSushi/toml"
+	"github.com/spf13/afero"
 )
 
 type BaseConfig struct {
@@ -22,10 +23,14 @@ type Config struct {
 	Agent AgentConfig
 }
 
-func Load(fn string) *Config {
-	bytes, err := os.ReadFile(fn)
+func Load(fs afero.Fs, fn string) *Config {
+	file, err := fs.Open(fn)
 	if err != nil {
-		log.Panicf("☠️ Unable to load configuration file: %v", err.Error())
+		panic(err.Error())
+	}
+	bytes, err := io.ReadAll(file)
+	if err != nil {
+		panic(err.Error())
 	}
 
 	c := &Config{}

@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/afero"
 
+	"github.com/haliphax/gobot/internal"
 	"github.com/haliphax/gobot/internal/config"
 	"github.com/haliphax/gobot/internal/harness"
 	"github.com/haliphax/gobot/internal/harness/openrouter"
@@ -19,10 +20,10 @@ import (
 var ConfigFilename = new("gobot.toml")
 
 func Main() {
-	fs := afero.NewOsFs()
+	internal.SetFs(afero.NewOsFs())
 
 	// load base configuration
-	conf := config.Load(fs, *ConfigFilename)
+	conf := config.Load(*ConfigFilename)
 
 	var (
 		modelProviderClient harness.ModelProviderClient
@@ -34,7 +35,7 @@ func Main() {
 	// load model provider
 	switch conf.Base.ModelProviderType {
 	case "openrouter":
-		modelProviderClient = harness.ModelProviderClient(openrouter.New(fs, *ConfigFilename))
+		modelProviderClient = harness.ModelProviderClient(openrouter.New(*ConfigFilename))
 	default:
 		log.Fatalf("☠️ Unsupported model provider: %v", conf.Base.ModelProviderType)
 	}
@@ -45,7 +46,7 @@ func Main() {
 	// load message platform
 	switch conf.Base.MessagePlatformType {
 	case "discord":
-		messagePlatform = platform.MessagePlatform(discord.New(fs, *ConfigFilename, modelProviderClient))
+		messagePlatform = platform.MessagePlatform(discord.New(*ConfigFilename, modelProviderClient))
 	default:
 		log.Fatalf("☠️ Unsupported message platform: %v", conf.Base.MessagePlatformType)
 	}

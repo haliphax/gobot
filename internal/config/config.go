@@ -6,7 +6,8 @@ import (
 	"log"
 
 	"github.com/BurntSushi/toml"
-	"github.com/spf13/afero"
+
+	"github.com/haliphax/gobot/internal"
 )
 
 type BaseConfig struct {
@@ -23,7 +24,9 @@ type Config struct {
 	Agent AgentConfig
 }
 
-func Load(fs afero.Fs, fn string) *Config {
+func Load(fn string) *Config {
+	fs := internal.GetFs()
+
 	file, err := fs.Open(fn)
 	if err != nil {
 		panic(err.Error())

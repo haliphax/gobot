@@ -10,8 +10,8 @@ import (
 	openrouter "github.com/OpenRouterTeam/go-sdk"
 	"github.com/OpenRouterTeam/go-sdk/models/components"
 	"github.com/OpenRouterTeam/go-sdk/models/operations"
-	"github.com/spf13/afero"
 
+	"github.com/haliphax/gobot/internal"
 	"github.com/haliphax/gobot/internal/harness"
 )
 
@@ -39,7 +39,8 @@ type OpenRouterClient struct {
 }
 
 // Load loads the specified configuration file
-func LoadConfiguration(fs afero.Fs, configFilename string) *OpenRouterConfig {
+func LoadConfiguration(configFilename string) *OpenRouterConfig {
+	fs := internal.GetFs()
 	file, err := fs.Open(configFilename)
 	if err != nil {
 		panic(err)
@@ -60,8 +61,8 @@ func LoadConfiguration(fs afero.Fs, configFilename string) *OpenRouterConfig {
 }
 
 // New provides a new OpenRouterClient instance by reference
-func New(fs afero.Fs, configFilename string) *OpenRouterClient {
-	conf := LoadConfiguration(fs, configFilename)
+func New(configFilename string) *OpenRouterClient {
+	conf := LoadConfiguration(configFilename)
 	s := openrouter.New(
 		openrouter.WithSecurity(conf.Token),
 	)

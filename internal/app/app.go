@@ -17,25 +17,22 @@ import (
 	"github.com/haliphax/gobot/internal/platform/discord"
 )
 
-var ConfigFilename = new("gobot.toml")
-
 func Main() {
 	internal.SetFs(afero.NewOsFs())
+	flag.Parse()
 
 	// load base configuration
-	conf := config.Load(*ConfigFilename)
+	conf := config.Load()
 
 	var (
 		modelProviderClient harness.ModelProviderClient
 		messagePlatform     platform.MessagePlatform
 	)
 
-	flag.Parse()
-
 	// load model provider
 	switch conf.Base.ModelProviderType {
 	case "openrouter":
-		modelProviderClient = harness.ModelProviderClient(openrouter.New(*ConfigFilename))
+		modelProviderClient = harness.ModelProviderClient(openrouter.New())
 	default:
 		log.Fatalf("☠️ Unsupported model provider: %v", conf.Base.ModelProviderType)
 	}
@@ -46,7 +43,7 @@ func Main() {
 	// load message platform
 	switch conf.Base.MessagePlatformType {
 	case "discord":
-		messagePlatform = platform.MessagePlatform(discord.New(*ConfigFilename, modelProviderClient))
+		messagePlatform = platform.MessagePlatform(discord.New(modelProviderClient))
 	default:
 		log.Fatalf("☠️ Unsupported message platform: %v", conf.Base.MessagePlatformType)
 	}

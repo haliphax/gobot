@@ -2,6 +2,7 @@
 package config
 
 import (
+	"flag"
 	"io"
 	"log"
 
@@ -24,10 +25,12 @@ type Config struct {
 	Agent AgentConfig
 }
 
-func Load(fn string) *Config {
+var ConfigFilename = flag.String("config", "gobot.toml", "Configuration file path")
+
+func Load() *Config {
 	fs := internal.GetFs()
 
-	file, err := fs.Open(fn)
+	file, err := fs.Open(*ConfigFilename)
 	if err != nil {
 		panic(err.Error())
 	}

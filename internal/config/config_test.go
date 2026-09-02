@@ -9,11 +9,14 @@ import (
 	"github.com/haliphax/gobot/internal"
 )
 
+var testFn = new("test.toml")
+
 // config.Load should parse base configuration from file
 func TestConfigLoadParsesBaseConfiguration(t *testing.T) {
 	fs := afero.NewMemMapFs()
+	ConfigFilename = testFn
 	internal.SetFs(fs)
-	file, err := fs.Create("test.toml")
+	file, err := fs.Create(*testFn)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -31,7 +34,7 @@ Model = "test-model"
 		panic(err.Error())
 	}
 
-	conf := Load("test.toml")
+	conf := Load()
 
 	if conf.Base.MessagePlatformType != "test-platform" {
 		t.Errorf("%v != %v", "test-platform", conf.Base.MessagePlatformType)
@@ -46,7 +49,8 @@ Model = "test-model"
 func TestConfigLoadPanicsOnMalformedConfig(t *testing.T) {
 	fs := afero.NewMemMapFs()
 	internal.SetFs(fs)
-	file, err := fs.Create("test.toml")
+	ConfigFilename = testFn
+	file, err := fs.Create(*testFn)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -63,5 +67,5 @@ func TestConfigLoadPanicsOnMalformedConfig(t *testing.T) {
 		}
 	}()
 
-	_ = Load("test.toml")
+	_ = Load()
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 
 	"github.com/haliphax/gobot/internal"
+	"github.com/haliphax/gobot/internal/config"
 	"github.com/haliphax/gobot/internal/harness"
 	"github.com/haliphax/gobot/internal/platform"
 	"github.com/haliphax/gobot/internal/platform/discord/commands"
@@ -100,9 +101,9 @@ func handleChatMessage(c *harness.ModelProviderClient) func(s *discordgo.Session
 }
 
 // Load loads the specified configuration file
-func LoadConfiguration(configFilename string) *DiscordConfig {
+func LoadConfiguration() *DiscordConfig {
 	fs := internal.GetFs()
-	file, err := fs.Open(configFilename)
+	file, err := fs.Open(*config.ConfigFilename)
 	if err != nil {
 		panic(err)
 	}
@@ -122,8 +123,8 @@ func LoadConfiguration(configFilename string) *DiscordConfig {
 }
 
 // New provides an initialized Discord client instance by reference
-func New(configFilename string, c harness.ModelProviderClient) *Discord {
-	conf := LoadConfiguration(configFilename)
+func New(c harness.ModelProviderClient) *Discord {
+	conf := LoadConfiguration()
 
 	s, err := discordgo.New("Bot " + conf.Token)
 	// check parameters

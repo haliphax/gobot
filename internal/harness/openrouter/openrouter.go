@@ -12,6 +12,7 @@ import (
 	"github.com/OpenRouterTeam/go-sdk/models/operations"
 
 	"github.com/haliphax/gobot/internal"
+	"github.com/haliphax/gobot/internal/config"
 	"github.com/haliphax/gobot/internal/harness"
 )
 
@@ -39,9 +40,9 @@ type OpenRouterClient struct {
 }
 
 // Load loads the specified configuration file
-func LoadConfiguration(configFilename string) *OpenRouterConfig {
+func LoadConfiguration() *OpenRouterConfig {
 	fs := internal.GetFs()
-	file, err := fs.Open(configFilename)
+	file, err := fs.Open(*config.ConfigFilename)
 	if err != nil {
 		panic(err)
 	}
@@ -61,8 +62,8 @@ func LoadConfiguration(configFilename string) *OpenRouterConfig {
 }
 
 // New provides a new OpenRouterClient instance by reference
-func New(configFilename string) *OpenRouterClient {
-	conf := LoadConfiguration(configFilename)
+func New() *OpenRouterClient {
+	conf := LoadConfiguration()
 	s := openrouter.New(
 		openrouter.WithSecurity(conf.Token),
 	)

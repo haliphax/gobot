@@ -31,6 +31,7 @@ Token = "test-token"
 		panic(err.Error())
 	}
 
+	config.Load()
 	conf := LoadConfiguration()
 
 	if conf.Token != "test-token" {

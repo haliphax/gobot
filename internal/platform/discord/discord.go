@@ -4,14 +4,12 @@ package discord
 import (
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/bwmarrin/discordgo"
 
-	"github.com/haliphax/gobot/internal"
 	"github.com/haliphax/gobot/internal/config"
 	"github.com/haliphax/gobot/internal/harness"
 	"github.com/haliphax/gobot/internal/platform"
@@ -100,21 +98,10 @@ func handleChatMessage(c *harness.ModelProviderClient) func(s *discordgo.Session
 	}
 }
 
-// Load loads the specified configuration file
+// LoadConfiguration parses the Discord section of the previously-loaded configuration blob
 func LoadConfiguration() *DiscordConfig {
-	fs := internal.GetFs()
-	file, err := fs.Open(*config.ConfigFilename)
-	if err != nil {
-		panic(err)
-	}
-
-	content, err := io.ReadAll(file)
-	if err != nil {
-		panic(err)
-	}
-
 	var baseConf Config
-	_, err = toml.Decode(string(content), &baseConf)
+	_, err := toml.Decode(config.Configuration, &baseConf)
 	if err != nil {
 		panic(err)
 	}

@@ -25,7 +25,10 @@ type Config struct {
 	Agent AgentConfig
 }
 
-var ConfigFilename = flag.String("config", "gobot.toml", "Configuration file path")
+var (
+	ConfigFilename = flag.String("config", "gobot.toml", "Configuration file path")
+	Configuration  string
+)
 
 func Load() *Config {
 	fs := internal.GetFs()
@@ -39,8 +42,9 @@ func Load() *Config {
 		panic(err.Error())
 	}
 
+	Configuration = string(bytes)
 	c := &Config{}
-	_, err = toml.Decode(string(bytes), &c)
+	_, err = toml.Decode(Configuration, &c)
 	if err != nil {
 		log.Panicf("☠️ Unable to decode TOML: %v", err.Error())
 	}

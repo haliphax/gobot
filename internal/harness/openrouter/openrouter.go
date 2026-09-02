@@ -3,7 +3,6 @@ package openrouter
 
 import (
 	"context"
-	"io"
 	"log"
 
 	"github.com/BurntSushi/toml"
@@ -11,7 +10,6 @@ import (
 	"github.com/OpenRouterTeam/go-sdk/models/components"
 	"github.com/OpenRouterTeam/go-sdk/models/operations"
 
-	"github.com/haliphax/gobot/internal"
 	"github.com/haliphax/gobot/internal/config"
 	"github.com/haliphax/gobot/internal/harness"
 )
@@ -39,21 +37,10 @@ type OpenRouterClient struct {
 	currentModel string
 }
 
-// Load loads the specified configuration file
+// LoadConfiguration parses the OpenRouter section of the previously-loaded configuration blob
 func LoadConfiguration() *OpenRouterConfig {
-	fs := internal.GetFs()
-	file, err := fs.Open(*config.ConfigFilename)
-	if err != nil {
-		panic(err)
-	}
-
-	content, err := io.ReadAll(file)
-	if err != nil {
-		panic(err)
-	}
-
 	var baseConf Config
-	_, err = toml.Decode(string(content), &baseConf)
+	_, err := toml.Decode(config.Configuration, &baseConf)
 	if err != nil {
 		panic(err)
 	}

@@ -1,4 +1,5 @@
 /gobot
 cover.out
+coverage/
 gobot.toml
 node_modules/

@@ -21,11 +21,14 @@ lint: # Format and lint
 	npx prettier -luw .
 
 test: # Run unit tests with coverage
-	@go test -v -coverprofile cover.out ./...
+	@[ -d coverage ] || mkdir coverage
+	@go test -cover ./... -args -test.gocoverdir "$$PWD/coverage"
+	@go tool covdata textfmt -i coverage -o coverage/profile
+	@go tool cover -func coverage/profile | grep -E '^total:'
 
 cover: # View coverage report
-	@[ -f cover.out ] || make test
-	@go tool cover -html cover.out
+	@[ -f coverage/profile ] || make test
+	@go tool cover -html coverage/profile
 
 clean: # Remove cache and project binary
 	go clean

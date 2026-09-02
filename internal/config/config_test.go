@@ -2,6 +2,7 @@ package config
 
 import (
 	"io"
+	"log"
 	"testing"
 
 	"github.com/spf13/afero"
@@ -47,6 +48,10 @@ Model = "test-model"
 
 // config.Load should panic on malformed configuration file
 func TestConfigLoadPanicsOnMalformedConfig(t *testing.T) {
+	previous := log.Writer()
+	log.SetOutput(io.Discard)
+	t.Cleanup(func() { log.SetOutput(previous) })
+
 	fs := afero.NewMemMapFs()
 	internal.SetFs(fs)
 	ConfigFilename = testFn

@@ -14,6 +14,7 @@ var testFn = new("test.toml")
 
 // LoadConfiguration should load the OpenRouter configuration block
 func TestLoadConfigurationParsesConfiguration(t *testing.T) {
+	// write test configuration file in memory-mapped file system
 	fs := afero.NewMemMapFs()
 	internal.SetFs(fs)
 	config.ConfigFilename = testFn
@@ -31,6 +32,7 @@ Token = "test-token"
 		panic(err.Error())
 	}
 
+	// parse configuration
 	config.Load()
 	conf := LoadConfiguration()
 

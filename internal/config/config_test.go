@@ -14,6 +14,7 @@ var testFn = new("test.toml")
 
 // config.Load should parse base configuration from file
 func TestConfigLoadParsesBaseConfiguration(t *testing.T) {
+	// create test config file in memory-mapped file system
 	fs := afero.NewMemMapFs()
 	ConfigFilename = testFn
 	internal.SetFs(fs)
@@ -35,6 +36,7 @@ Model = "test-model"
 		panic(err.Error())
 	}
 
+	// parse configuration
 	conf := Load()
 
 	if conf.Base.MessagePlatformType != "test-platform" {
@@ -48,10 +50,12 @@ Model = "test-model"
 
 // config.Load should panic on malformed configuration file
 func TestConfigLoadPanicsOnMalformedConfig(t *testing.T) {
+	// squash logs during test
 	previous := log.Writer()
 	log.SetOutput(io.Discard)
 	t.Cleanup(func() { log.SetOutput(previous) })
 
+	// create test config file in memory-mapped file system
 	fs := afero.NewMemMapFs()
 	internal.SetFs(fs)
 	ConfigFilename = testFn
@@ -72,5 +76,6 @@ func TestConfigLoadPanicsOnMalformedConfig(t *testing.T) {
 		}
 	}()
 
+	// parse configuration
 	_ = Load()
 }

@@ -40,11 +40,11 @@ Model = "test-model"
 	conf := Load()
 
 	if conf.Base.MessagePlatformType != "test-platform" {
-		t.Errorf("%v != %v", "test-platform", conf.Base.MessagePlatformType)
+		t.Errorf("test-platform != %v", conf.Base.MessagePlatformType)
 	}
 
 	if conf.Base.ModelProviderType != "test-provider" {
-		t.Errorf("%v != %v", "test-provider", conf.Base.ModelProviderType)
+		t.Errorf("test-provider != %v", conf.Base.ModelProviderType)
 	}
 }
 
